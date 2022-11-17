@@ -16,7 +16,7 @@ const io = new Server(httpServer, {
     cors: {
         origin: [
             "http://localhost:3000",
-            "https://tbgpublications.vercel.app/"
+            "https://tbgpublications.vercel.app"
         ],
         credentials: true
     }
