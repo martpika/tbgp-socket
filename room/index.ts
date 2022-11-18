@@ -19,6 +19,8 @@ export type MemberWithUsername = Member & {
     username: string
 }
 
+export type PartSubmission = MemberWithUsername & Room & { bastionId: string }
+
 export type Chat = {
     member: MemberWithUsername,
     message: string,
@@ -28,6 +30,7 @@ export type Chat = {
 export type CollabRoom = {
     writeup: string,
     members: MemberWithSocket[],
+    justJoinedMembers: string[],
     chats: {
         member: MemberWithUsername,
         message: string
@@ -61,6 +64,7 @@ export class CollabRooms  {
                     socketId
                 }
             ],
+            justJoinedMembers: [],
             chats: []
         })
     }
@@ -71,6 +75,7 @@ export class CollabRooms  {
             lastname: writeupRoom.lastname,
             socketId
         })
+        collabRoom.justJoinedMembers.push(socketId)
     }
 
     removeMemberFromRoom( socketId: string ) {

@@ -3,10 +3,11 @@ import {
     Socket } from "socket.io"
 import { createServer } from "http"
 import express from "express"
-import { Events } from "../events"
+import { SocketEvents } from "../events"
 import { 
     Chat,
     CollabRooms, 
+    PartSubmission, 
     WriteupRoom} from "../room"
 
 
@@ -24,44 +25,61 @@ const io = new Server(httpServer, {
 
 const collabRooms = new CollabRooms()
 
-io.on(Events.connection, ( socket: Socket ) => {
+io.on(SocketEvents.connection, ( socket: Socket ) => {
     
-    socket.on(Events.clients.create_collab_room, (writeupRoom: WriteupRoom) => {
+    socket.on(SocketEvents.clients.create_collab_room, (writeupRoom: WriteupRoom) => {
         const collabRoom = collabRooms.checkIfRoomExist(writeupRoom.writeup)
      
         if ( !collabRoom ) {
             collabRooms.createRoomAndAddMember(writeupRoom, socket.id)
-            
         } else {
             collabRooms.addMemberToRoom(writeupRoom, collabRoom, socket.id)
-            socket.emit(Events.server.broadcast_previous_chats, collabRoom?.chats)
+            socket.emit(SocketEvents.server.broadcast_previous_chats, collabRoom?.chats)
+            socket.broadcast.to(writeupRoom.writeup).emit(SocketEvents.server.broadcast_request_previous_slate, socket.id)
         }
 
         socket.join(writeupRoom.writeup)
     })
+
+    socket.on(SocketEvents.clients.emit_previous_slate, ({ socketId, slate }: { socketId: string, slate: any }) => {
+        socket.to(socketId).emit(SocketEvents.server.broadcast_previous_slate, slate)
+    })
     
-    socket.on(Events.clients.emit_title, ({ writeup, title }: { writeup: string, title: string }) => {
-        socket.broadcast.to(writeup).emit(Events.server.broadcast_title, title)
+    socket.on(SocketEvents.clients.emit_title, ({ writeup, title }: { writeup: string, title: string }) => {
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_title, title)
     })
 
-    socket.on(Events.clients.emit_caption, ({ writeup, caption }: { writeup: string, caption: string }) => {
-        socket.broadcast.to(writeup).emit(Events.server.broadcast_caption, caption)
+    socket.on(SocketEvents.clients.emit_caption, ({ writeup, caption }: { writeup: string, caption: string }) => {
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_caption, caption)
     })
 
-    socket.on(Events.clients.emit_slate, ({ writeup, slate, editorId }: { writeup: string, slate: any, editorId: string }) => {
-        socket.broadcast.to(writeup).emit(Events.server.broadcast_slate, {
+    socket.on(SocketEvents.clients.emit_slate, ({ writeup, slate, editorId }: { writeup: string, slate: any, editorId: string }) => {
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_slate, {
             slate,
             editorId
         })
     })
 
-    socket.on(Events.clients.send_chat, ( chat: Chat ) => {
-        collabRooms.pushChatToRoom(chat)
-        const { writeup, ...rest } = chat
-        socket.broadcast.to(writeup).emit(Events.server.broadcast_chat, rest)
+    socket.on(SocketEvents.clients.emit_part_submission, (submission: PartSubmission) =>{
+        const { writeup, ...rest } = submission
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_part_submission, rest)
     })
 
-    socket.on(Events.disconnect, () => {
+    socket.on(SocketEvents.clients.emit_cancel_part_submission, ({ writeup, bastionId }: { writeup: string, bastionId: string }) =>{
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_cancel_part_submission, bastionId)
+    })
+
+    socket.on(SocketEvents.clients.send_chat, ( chat: Chat ) => {
+        collabRooms.pushChatToRoom(chat)
+        const { writeup, ...rest } = chat
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_chat, rest)
+    })
+
+    socket.on(SocketEvents.clients.emit_submit_writeup, ( writeup: string ) => {
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_submission, true)
+    })
+
+    socket.on(SocketEvents.disconnect, () => {
         collabRooms.removeMemberFromRoom(socket.id)
     })
 })
