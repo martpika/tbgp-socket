@@ -55,7 +55,6 @@ io.on(SocketEvents.connection, ( socket: Socket ) => {
     })
 
     socket.on(SocketEvents.clients.emit_slate, ({ writeup, slate, editorId }: { writeup: string, slate: any, editorId: string }) => {
-        console.log(slate)
         socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_slate, {
             slate,
             editorId
