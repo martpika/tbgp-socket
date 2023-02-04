@@ -62,8 +62,11 @@ io.on(SocketEvents.connection, ( socket: Socket ) => {
     })
 
     socket.on(SocketEvents.clients.emit_part_submission, (submission: PartSubmission) =>{
-        const { writeup, ...rest } = submission
-        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_part_submission, rest)
+        const { writeup, date, ...rest } = submission
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_part_submission, {
+            member: rest,
+            date
+        })
     })
 
     socket.on(SocketEvents.clients.emit_cancel_part_submission, ({ writeup, bastionId }: { writeup: string, bastionId: string }) =>{
@@ -76,8 +79,8 @@ io.on(SocketEvents.connection, ( socket: Socket ) => {
         socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_chat, rest)
     })
 
-    socket.on(SocketEvents.clients.emit_submit_writeup, ( writeup: string ) => {
-        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_submission, true)
+    socket.on(SocketEvents.clients.emit_submit_writeup, ( { writeup, date }: { writeup: string, date: Date } ) => {
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_submission, date)
     })
 
     socket.on(SocketEvents.disconnect, () => {

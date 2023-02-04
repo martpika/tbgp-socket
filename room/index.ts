@@ -19,7 +19,10 @@ export type MemberWithUsername = Member & {
     username: string
 }
 
-export type PartSubmission = MemberWithUsername & Room & { bastionId: string }
+export type PartSubmission = MemberWithUsername & Room & {
+    bastionId: string,
+    date: Date
+}
 
 export type Chat = {
     member: MemberWithUsername,
