@@ -79,8 +79,12 @@ io.on(SocketEvents.connection, ( socket: Socket ) => {
         socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_chat, rest)
     })
 
-    socket.on(SocketEvents.clients.emit_submit_writeup, ( { writeup, date }: { writeup: string, date: Date } ) => {
-        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_submission, date)
+    socket.on(SocketEvents.clients.emit_submit_writeup, ( submission: PartSubmission ) => {
+        const { writeup, date, ...rest } = submission
+        socket.broadcast.to(writeup).emit(SocketEvents.server.broadcast_submission, {
+            member: rest,
+            date
+        })
     })
 
     socket.on(SocketEvents.disconnect, () => {
